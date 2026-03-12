@@ -1,4 +1,7 @@
+"use client";
+
 import { Flame, Rocket, Star, Trophy } from "lucide-react";
+import { useLocale } from "@/components/locale-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
@@ -11,40 +14,41 @@ type Props = {
 };
 
 export function DashboardCards({ level, xp, streak, bestWpm, coins = 0 }: Props) {
+  const { t } = useLocale();
   const levelProgress = xp % 100;
   const items = [
     {
-      label: "当前等级",
+      label: t("dashboard.level"),
       value: `Lv.${level}`,
-      hint: `距离 Lv.${level + 1} 还差 ${100 - levelProgress} XP`,
+      hint: t("dashboard.levelHint", { value: level + 1, xp: 100 - levelProgress }),
       progress: levelProgress,
       icon: Rocket
     },
     {
-      label: "总经验",
+      label: t("dashboard.xp"),
       value: `${xp}`,
-      hint: "每次完成训练都会获得经验",
+      hint: t("dashboard.xpHint"),
       progress: Math.min(100, Math.round(((xp % 300) / 300) * 100)),
       icon: Star
     },
     {
-      label: "连续训练",
+      label: t("dashboard.streak"),
       value: `${streak} 天`,
-      hint: streak >= 7 ? "状态很好，继续保持" : "每天打一点，进步更稳定",
+      hint: streak >= 7 ? t("dashboard.streakHintGood") : t("dashboard.streakHintNormal"),
       progress: Math.min(100, streak * 12),
       icon: Flame
     },
     {
-      label: "最高速度",
+      label: t("dashboard.bestWpm"),
       value: `${bestWpm} WPM`,
-      hint: bestWpm >= 30 ? "已经进入进阶节奏" : "准确率稳定后再提速",
+      hint: bestWpm >= 30 ? t("dashboard.bestWpmHintFast") : t("dashboard.bestWpmHintNormal"),
       progress: Math.min(100, Math.round((bestWpm / 60) * 100)),
       icon: Trophy
     },
     {
-      label: "习惯金币",
+      label: t("dashboard.coins"),
       value: `${coins}`,
-      hint: "签到、挑战和三星通关都会给你金币",
+      hint: t("dashboard.coinsHint"),
       progress: Math.min(100, Math.round((coins / 500) * 100)),
       icon: Star
     }

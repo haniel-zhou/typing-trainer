@@ -17,22 +17,22 @@ export default function ProductPage() {
   return (
     <AppShell>
       <PageHero
-        eyebrow="Product blueprint"
-        title="产品级 Typing Trainer 蓝图"
-        description="这里把完整功能结构、页面结构、数据库设计、成长系统和游戏化机制统一收进一个页面。目标不是做一个单纯练字网页，而是做一套能长期留住用户、支持分享扩散和持续升级的产品。"
+        eyebrow="Product overview"
+        title="Typing Trainer 功能全景"
+        description="这一页会带你快速看清这套打字训练能做什么、怎么帮你进步，以及为什么它不只是一个练字网页，而是一套可以长期使用、持续升级的打字产品。"
         aside={
           <>
             <div className="rounded-[24px] bg-white/75 p-4 shadow-sm">
-              <div className="text-sm text-sky-600/70">产品定位</div>
-              <div className="font-display text-3xl text-sky-950">练习工具 + 成长系统</div>
+              <div className="text-sm text-sky-600/70">你会得到</div>
+              <div className="font-display text-3xl text-sky-950">训练 + 成长 + 分享</div>
             </div>
             <div className="rounded-[24px] bg-white/75 p-4 shadow-sm">
-              <div className="text-sm text-sky-600/70">核心抓手</div>
-              <div className="font-display text-3xl text-sky-950">训练 / 留存 / 分享</div>
+              <div className="text-sm text-sky-600/70">核心体验</div>
+              <div className="font-display text-3xl text-sky-950">练得清楚，进步看得见</div>
             </div>
             <div className="rounded-[24px] bg-white/75 p-4 shadow-sm">
-              <div className="text-sm text-sky-600/70">产品目标</div>
-              <div className="font-display text-3xl text-sky-950">每日可回访</div>
+              <div className="text-sm text-sky-600/70">适合谁</div>
+              <div className="font-display text-3xl text-sky-950">新手、学生、办公与专业输入</div>
             </div>
           </>
         }

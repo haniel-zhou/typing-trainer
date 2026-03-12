@@ -19,6 +19,7 @@ import {
   Zap
 } from "lucide-react";
 import { RhythmStation } from "@/components/rhythm-station";
+import { useLocale } from "@/components/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -135,6 +136,7 @@ function buildSessionConfig({
 
 export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props) {
   const router = useRouter();
+  const { inputLanguage } = useLocale();
   const sessionConfig = useMemo(
     () => buildSessionConfig({ lesson, customId, challenge, boss, duel }),
     [boss, challenge, customId, duel, lesson]
@@ -470,7 +472,11 @@ export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props)
           if (paused) setPaused(false);
           break;
         case "reset":
+        case "replay":
           reset();
+          break;
+        case "next-lesson":
+          goToNextLesson();
           break;
         case "exit":
           exitTraining();
@@ -493,7 +499,11 @@ export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props)
     }
 
     window.addEventListener("trainer-command", onTrainerCommand);
-    return () => window.removeEventListener("trainer-command", onTrainerCommand);
+    window.addEventListener("app-voice-command", onTrainerCommand);
+    return () => {
+      window.removeEventListener("trainer-command", onTrainerCommand);
+      window.removeEventListener("app-voice-command", onTrainerCommand);
+    };
   }, [paused, typingSuggestion]);
 
   if (!isReady) {
@@ -819,6 +829,8 @@ export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props)
                     }
                   }}
                   placeholder="在这里开始输入..."
+                  lang={inputLanguage}
+                  dir={inputLanguage === "ar" ? "rtl" : "ltr"}
                   className="trainer-input mt-3 min-h-[88px] rounded-[22px] border-sky-100 bg-sky-50/65 px-5 py-3 text-xl leading-8"
                   disabled={finished || paused}
                 />

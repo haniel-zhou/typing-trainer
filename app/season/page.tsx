@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Share2 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AchievementWall } from "@/components/achievement-wall";
@@ -13,37 +14,27 @@ import { loadFriendProfile, loadProgress, loadRecords } from "@/lib/storage";
 import { buildAchievementBadges, mergeAchievementBadges } from "@/lib/typing";
 import { AchievementBadge, AppProgress, TrainingRecord } from "@/lib/types";
 
+const DEFAULT_PROGRESS: AppProgress = {
+  level: 1,
+  xp: 0,
+  streak: 0,
+  lastPracticeDate: null,
+  totalCheckIns: 0,
+  coins: 0,
+  lastCheckInDate: null,
+  seasonPoints: 0
+};
+
 export default function SeasonPage() {
+  const router = useRouter();
   const [progress] = useState<AppProgress>(() =>
-    typeof window === "undefined"
-      ? {
-          level: 1,
-          xp: 0,
-          streak: 0,
-          lastPracticeDate: null,
-          totalCheckIns: 0,
-          coins: 0,
-          lastCheckInDate: null,
-          seasonPoints: 0
-        }
-      : loadProgress()
+    typeof window === "undefined" ? DEFAULT_PROGRESS : loadProgress()
   );
   const [records] = useState<TrainingRecord[]>(() => (typeof window === "undefined" ? [] : loadRecords()));
   const [badges, setBadges] = useState<AchievementBadge[]>(() =>
     buildAchievementBadges(
       typeof window === "undefined" ? [] : loadRecords(),
-      typeof window === "undefined"
-        ? {
-            level: 1,
-            xp: 0,
-            streak: 0,
-            lastPracticeDate: null,
-            totalCheckIns: 0,
-            coins: 0,
-            lastCheckInDate: null,
-            seasonPoints: 0
-          }
-        : loadProgress()
+      typeof window === "undefined" ? DEFAULT_PROGRESS : loadProgress()
     )
   );
 
@@ -56,6 +47,18 @@ export default function SeasonPage() {
 
   const bestWpm = records.length ? Math.max(...records.map((item) => item.wpm)) : 0;
   const myProfile = loadFriendProfile();
+
+  useEffect(() => {
+    function onVoiceCommand(event: Event) {
+      const detail = (event as CustomEvent<{ action: string }>).detail;
+      if (detail?.action === "open-season-share") {
+        router.push(`/share/season/${encodeURIComponent(myProfile.shareCode)}`);
+      }
+    }
+
+    window.addEventListener("app-voice-command", onVoiceCommand);
+    return () => window.removeEventListener("app-voice-command", onVoiceCommand);
+  }, [myProfile.shareCode, router]);
 
   return (
     <AppShell>

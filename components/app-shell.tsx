@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, BookOpen, ChartColumn, Crown, Keyboard, LayoutTemplate, Sparkles, Swords, Users, Wand2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, BookOpen, ChartColumn, Crown, Keyboard, LayoutTemplate, LogIn, Sparkles, Swords, Users, Wand2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { VoiceCommandHub } from "@/components/voice-command-hub";
 import { buttonStyles } from "@/components/ui/button";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { useLocale } from "@/components/locale-provider";
+import { loadAuthSession } from "@/lib/storage";
 
 export function AppShell({
   children,
@@ -15,23 +19,36 @@ export function AppShell({
   compact?: boolean;
 }) {
   const pathname = usePathname();
+  const { t } = useLocale();
+  const [sessionName, setSessionName] = useState("");
   const navItems = [
-    { href: "/", label: "首页", icon: Sparkles },
-    { href: "/lessons", label: "课程", icon: BookOpen },
-    { href: "/trainer", label: "训练", icon: Keyboard },
-    { href: "/challenge", label: "挑战", icon: Swords },
-    { href: "/friends", label: "好友", icon: Users },
-    { href: "/custom", label: "自定义", icon: Wand2 },
-    { href: "/season", label: "赛季", icon: Crown },
-    { href: "/stats", label: "成长", icon: ChartColumn },
-    { href: "/product", label: "产品", icon: LayoutTemplate }
+    { href: "/", label: t("nav.home"), icon: Sparkles },
+    { href: "/lessons", label: t("nav.lessons"), icon: BookOpen },
+    { href: "/trainer", label: t("nav.trainer"), icon: Keyboard },
+    { href: "/challenge", label: t("nav.challenge"), icon: Swords },
+    { href: "/friends", label: t("nav.friends"), icon: Users },
+    { href: "/custom", label: t("nav.custom"), icon: Wand2 },
+    { href: "/season", label: t("nav.season"), icon: Crown },
+    { href: "/stats", label: t("nav.stats"), icon: ChartColumn },
+    { href: "/product", label: t("nav.product"), icon: LayoutTemplate }
   ];
+
+  useEffect(() => {
+    function syncSession() {
+      const session = loadAuthSession();
+      setSessionName(session?.name ?? "");
+    }
+
+    syncSession();
+    window.addEventListener("auth-session-changed", syncSession);
+    return () => window.removeEventListener("auth-session-changed", syncSession);
+  }, []);
 
   if (compact) {
     const compactActions = [
-      { href: "/lessons", label: "课程", icon: BookOpen },
-      { href: "/challenge", label: "挑战", icon: Swords },
-      { href: "/stats", label: "成长", icon: ChartColumn }
+      { href: "/lessons", label: t("nav.lessons"), icon: BookOpen },
+      { href: "/challenge", label: t("nav.challenge"), icon: Swords },
+      { href: "/stats", label: t("nav.stats"), icon: ChartColumn }
     ];
 
     return (
@@ -49,13 +66,13 @@ export function AppShell({
                     })}
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    返回课程
+                    {t("shell.backLessons")}
                   </Link>
                   <CardTitle className="flex min-w-0 items-center gap-2 text-base md:text-lg">
                     <span className="flex h-8 w-8 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-400 text-white shadow-lg">
                       <Keyboard className="h-4 w-4" />
                     </span>
-                    <span className="truncate">训练模式</span>
+                    <span className="truncate">{t("shell.trainingMode")}</span>
                   </CardTitle>
                 </div>
 
@@ -84,6 +101,21 @@ export function AppShell({
                   <VoiceCommandHub compact />
                 </div>
 
+                <div className="hidden lg:flex">
+                  <LanguageSwitcher compact />
+                </div>
+
+                <Link
+                  href="/auth"
+                  className={buttonStyles({
+                    variant: "outline",
+                    className: "gap-1.5 whitespace-nowrap px-2.5 py-1.5 text-xs"
+                  })}
+                >
+                  <LogIn className="h-4 w-4" />
+                  {sessionName || t("shell.signIn")}
+                </Link>
+
                 <div className="flex items-center gap-1.5 lg:hidden">
                   {compactActions.map((item) => {
                     const Icon = item.icon;
@@ -103,6 +135,7 @@ export function AppShell({
                       </Link>
                     );
                   })}
+                  <LanguageSwitcher compact />
                 </div>
               </div>
             </CardHeader>
@@ -123,17 +156,17 @@ export function AppShell({
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 rounded-full bg-sky-100/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-sky-700">
                   <Sparkles className="h-3.5 w-3.5" />
-                  Fun-first touch typing
+                  {t("shell.eyebrow")}
                 </div>
                 <div className="space-y-2">
                   <CardTitle className="flex items-center gap-3 text-3xl md:text-4xl">
                     <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-400 text-white shadow-lg">
                       <Keyboard className="h-6 w-6" />
                     </span>
-                    Typing Trainer
+                    {t("shell.title")}
                   </CardTitle>
                   <p className="max-w-2xl text-sm leading-7 text-sky-800/80 md:text-base">
-                    用分关课程、即时反馈和成长记录，把枯燥练习做成可以坚持的打字训练。
+                    {t("shell.description")}
                   </p>
                 </div>
               </div>
@@ -161,7 +194,17 @@ export function AppShell({
                     );
                   })}
                 </div>
-                <VoiceCommandHub compact={compact} />
+                <div className="flex flex-wrap items-center gap-3">
+                  <VoiceCommandHub compact={compact} />
+                  <LanguageSwitcher compact />
+                  <Link
+                    href="/auth"
+                    className={buttonStyles({ variant: "outline", className: "gap-2 px-4 py-3" })}
+                  >
+                    <LogIn className="h-4 w-4" />
+                    {sessionName || t("shell.signIn")}
+                  </Link>
+                </div>
               </CardContent>
             </div>
           </CardHeader>

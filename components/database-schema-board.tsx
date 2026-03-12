@@ -5,7 +5,7 @@ export function DatabaseSchemaBoard({ tables }: { tables: DatabaseTableSpec[] })
   return (
     <Card>
       <CardHeader>
-        <CardTitle>3. 数据库设计</CardTitle>
+        <CardTitle>3. 你的数据会怎么被保存</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 xl:grid-cols-2">
         {tables.map((table) => (

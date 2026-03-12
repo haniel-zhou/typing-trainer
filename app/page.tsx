@@ -30,6 +30,7 @@ import { pullCloudAchievements } from "@/lib/cloud";
 import { buildAchievementBadges, mergeAchievementBadges } from "@/lib/typing";
 import { loadFriendProfile, loadProgress, loadRecords } from "@/lib/storage";
 import { AchievementBadge, AppProgress, TrainingRecord } from "@/lib/types";
+import { useLocale } from "@/components/locale-provider";
 
 const DEFAULT_PROGRESS: AppProgress = {
   level: 1,
@@ -43,6 +44,7 @@ const DEFAULT_PROGRESS: AppProgress = {
 };
 
 export default function HomePage() {
+  const { t } = useLocale();
   const [progress, setProgress] = useState<AppProgress>(() =>
     typeof window === "undefined" ? DEFAULT_PROGRESS : loadProgress()
   );
@@ -76,21 +78,21 @@ export default function HomePage() {
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/75 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-sky-700 shadow-sm">
                 <Sparkles className="h-4 w-4" />
-                Beginner-friendly typing lab
+                {t("home.eyebrow")}
               </div>
               <div className="space-y-4">
                 <h1 className="font-display text-4xl leading-tight text-sky-950 md:text-5xl">
-                  把打字训练做成一条
-                  <span className="text-sky-500">有反馈、有节奏、有成长感</span>
-                  的学习路径
+                  {t("home.titleBefore")}
+                  <span className="text-sky-500">{t("home.titleAccent")}</span>
+                  {t("home.titleAfter")}
                 </h1>
                 <p className="max-w-2xl text-base leading-8 text-sky-800/80">
-                  从基准键开始，逐关建立正确手型；训练过程中即时显示速度、正确率和键位提示，让每一次输入都知道自己该怎么变快。
+                  {t("home.description")}
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Link href="/trainer?lesson=1" className={buttonStyles({ className: "gap-2" })}>
-                  从第一关开始
+                  {t("home.startFirstLesson")}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
@@ -98,35 +100,35 @@ export default function HomePage() {
                   className={buttonStyles({ variant: "outline", className: "gap-2" })}
                 >
                   <Swords className="h-4 w-4" />
-                  进入挑战榜
+                  {t("home.enterChallenge")}
                 </Link>
                 <Link
                   href="/custom"
                   className={buttonStyles({ variant: "outline", className: "gap-2" })}
                 >
                   <WandSparkles className="h-4 w-4" />
-                  创建自定义练习
+                  {t("home.createCustom")}
                 </Link>
                 <Link
                   href="/friends"
                   className={buttonStyles({ variant: "outline", className: "gap-2" })}
                 >
                   <Users className="h-4 w-4" />
-                  邀请好友
+                  {t("home.inviteFriends")}
                 </Link>
                 <Link
                   href="/product"
                   className={buttonStyles({ variant: "outline", className: "gap-2" })}
                 >
                   <LayoutTemplate className="h-4 w-4" />
-                  产品蓝图
+                  {t("home.productOverview")}
                 </Link>
                 <Link
                   href="/season"
                   className={buttonStyles({ variant: "outline", className: "gap-2" })}
                 >
                   <Crown className="h-4 w-4" />
-                  赛季回顾
+                  {t("home.seasonReview")}
                 </Link>
                 {myShareCode ? (
                   <Link
@@ -134,7 +136,7 @@ export default function HomePage() {
                     className={buttonStyles({ variant: "outline", className: "gap-2" })}
                   >
                     <Share2 className="h-4 w-4" />
-                    分享战绩卡
+                    {t("home.shareCard")}
                   </Link>
                 ) : null}
               </div>

@@ -5,7 +5,7 @@ export function GrowthSystemBoard({ layers }: { layers: GrowthLayer[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>4. 用户成长系统</CardTitle>
+        <CardTitle>4. 你会怎样一步步进步</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 xl:grid-cols-3">
         {layers.map((layer) => (

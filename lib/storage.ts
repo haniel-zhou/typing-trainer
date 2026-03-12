@@ -1,5 +1,6 @@
 import {
   AppProgress,
+  AuthSession,
   CustomExercise,
   ExternalTrack,
   FriendLink,
@@ -7,11 +8,14 @@ import {
   PersonalWordBank,
   RhythmSettings,
   ShareRecord,
+  SupportedLocale,
   TrainerViewSettings,
   TrainingRecord,
+  UserPreferences,
   UploadedTrack
 } from "@/lib/types";
 import { DEFAULT_EXTERNAL_TRACKS } from "@/data/external-tracks";
+import { getDirection, normalizeLocale } from "@/lib/i18n";
 
 const KEYS = {
   progress: "typing-trainer-progress",
@@ -25,7 +29,9 @@ const KEYS = {
   wordBanks: "typing-trainer-word-banks",
   trainerView: "typing-trainer-trainer-view",
   dailyMissions: "typing-trainer-daily-missions",
-  shareHistory: "typing-trainer-share-history"
+  shareHistory: "typing-trainer-share-history",
+  preferences: "typing-trainer-preferences",
+  authSession: "typing-trainer-auth-session"
 };
 
 const DB_NAME = "typing-trainer-media";
@@ -58,6 +64,66 @@ export function loadProgress(): AppProgress {
   };
   if (!raw) return defaults;
   return { ...defaults, ...(JSON.parse(raw) as Partial<AppProgress>) };
+}
+
+function detectLocaleFromNavigator(): SupportedLocale {
+  if (typeof window === "undefined") return "zh-CN";
+  const primary = window.navigator.languages?.[0] ?? window.navigator.language;
+  return normalizeLocale(primary);
+}
+
+export function loadUserPreferences(): UserPreferences {
+  const recommendedLanguage = detectLocaleFromNavigator();
+  const defaults: UserPreferences = {
+    interfaceLanguage: recommendedLanguage,
+    inputLanguage: recommendedLanguage,
+    direction: getDirection(recommendedLanguage),
+    recommendedLanguage,
+    autoDetected: true
+  };
+
+  if (typeof window === "undefined") return defaults;
+  const raw = window.localStorage.getItem(KEYS.preferences);
+  if (!raw) return defaults;
+  const parsed = { ...defaults, ...(JSON.parse(raw) as Partial<UserPreferences>) };
+  const interfaceLanguage = normalizeLocale(parsed.interfaceLanguage);
+  const inputLanguage = normalizeLocale(parsed.inputLanguage);
+  return {
+    ...parsed,
+    interfaceLanguage,
+    inputLanguage,
+    recommendedLanguage: normalizeLocale(parsed.recommendedLanguage),
+    direction: getDirection(interfaceLanguage)
+  };
+}
+
+export function saveUserPreferences(preferences: UserPreferences) {
+  if (typeof window === "undefined") return;
+  const normalized: UserPreferences = {
+    ...preferences,
+    interfaceLanguage: normalizeLocale(preferences.interfaceLanguage),
+    inputLanguage: normalizeLocale(preferences.inputLanguage),
+    recommendedLanguage: normalizeLocale(preferences.recommendedLanguage),
+    direction: getDirection(normalizeLocale(preferences.interfaceLanguage))
+  };
+  window.localStorage.setItem(KEYS.preferences, JSON.stringify(normalized));
+}
+
+export function loadAuthSession(): AuthSession | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(KEYS.authSession);
+  if (!raw) return null;
+  return JSON.parse(raw) as AuthSession;
+}
+
+export function saveAuthSession(session: AuthSession) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(KEYS.authSession, JSON.stringify(session));
+}
+
+export function clearAuthSession() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(KEYS.authSession);
 }
 
 export function saveProgress(progress: AppProgress) {

@@ -136,6 +136,25 @@ export function FriendsHub({ inviteCode, inviteName }: Props) {
     setManualLink("");
   }
 
+  useEffect(() => {
+    function onVoiceCommand(event: Event) {
+      const detail = (event as CustomEvent<{ action: string }>).detail;
+      switch (detail?.action) {
+        case "copy-invite-link":
+          void copyInviteLink();
+          break;
+        case "share-invite-link":
+          void shareInviteLink();
+          break;
+        default:
+          break;
+      }
+    }
+
+    window.addEventListener("app-voice-command", onVoiceCommand);
+    return () => window.removeEventListener("app-voice-command", onVoiceCommand);
+  }, [inviteUrl, profile]);
+
   const inviteBanner =
     inviteCode && inviteName
       ? {

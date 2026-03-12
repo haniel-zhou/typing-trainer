@@ -5,7 +5,7 @@ export function ProductPageMap({ pages }: { pages: ProductPageNode[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>2. 所有页面结构</CardTitle>
+        <CardTitle>2. 你可以怎么使用这套产品</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {pages.map((page) => (

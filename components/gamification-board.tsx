@@ -5,7 +5,7 @@ export function GamificationBoard({ mechanics }: { mechanics: GameMechanic[] }) 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>5. 游戏化机制</CardTitle>
+        <CardTitle>5. 为什么练习会更容易坚持</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 xl:grid-cols-2">
         {mechanics.map((mechanic) => (

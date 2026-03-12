@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FileText, Mic, MicOff, Sparkles, Trash2, WandSparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocale } from "@/components/locale-provider";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button, buttonStyles } from "@/components/ui/button";
@@ -53,6 +54,7 @@ function getSpeechRecognitionConstructor() {
 }
 
 export function CustomEditor() {
+  const { inputLanguage } = useLocale();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [items, setItems] = useState<CustomExercise[]>(() =>
@@ -204,6 +206,25 @@ export function CustomEditor() {
     setIsListening(true);
   }
 
+  useEffect(() => {
+    function onVoiceCommand(event: Event) {
+      const detail = (event as CustomEvent<{ action: string }>).detail;
+      switch (detail?.action) {
+        case "generate-practice":
+          generateFromTerms();
+          break;
+        case "save-practice":
+          addItem();
+          break;
+        default:
+          break;
+      }
+    }
+
+    window.addEventListener("app-voice-command", onVoiceCommand);
+    return () => window.removeEventListener("app-voice-command", onVoiceCommand);
+  }, [content, termInput, title, items, wordBanks]);
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
       <Card className="overflow-hidden">
@@ -263,6 +284,8 @@ export function CustomEditor() {
               placeholder="例如：function, variable, interface 或一行一个术语"
               value={termInput}
               onChange={(e) => setTermInput(e.target.value)}
+              lang={inputLanguage}
+              dir={inputLanguage === "ar" ? "rtl" : "ltr"}
               className="min-h-[120px]"
             />
             <div className="mt-3 flex flex-wrap gap-2">
@@ -283,6 +306,8 @@ export function CustomEditor() {
             placeholder="把你想练习的内容贴到这里"
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            lang={inputLanguage}
+            dir={inputLanguage === "ar" ? "rtl" : "ltr"}
             className="min-h-[240px]"
           />
           <div className="flex items-center justify-between gap-3 rounded-[24px] bg-sky-50/80 p-4 text-sm text-sky-700">

@@ -11,7 +11,7 @@ export function ProductFeatureMap({ sections }: { sections: ProductCapabilitySec
   return (
     <Card>
       <CardHeader>
-        <CardTitle>1. 完整功能结构图</CardTitle>
+        <CardTitle>1. 你能用到的核心功能</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-4 xl:grid-cols-2">
         {sections.map((section) => (

@@ -343,10 +343,17 @@ export type VoiceCommandAction =
   | "resume"
   | "reset"
   | "exit"
+  | "next-lesson"
+  | "replay"
   | "theme-default"
   | "theme-eye-care"
   | "theme-night"
-  | "accept-suggestion";
+  | "accept-suggestion"
+  | "copy-invite-link"
+  | "share-invite-link"
+  | "generate-practice"
+  | "save-practice"
+  | "open-season-share";
 
 export type VoiceIntent =
   | {
@@ -362,6 +369,16 @@ export type VoiceIntent =
       action: VoiceCommandAction;
     }
   | {
+      kind: "confirm";
+      label: string;
+      confidence: number;
+    }
+  | {
+      kind: "cancel";
+      label: string;
+      confidence: number;
+    }
+  | {
       kind: "unknown";
       label: string;
       confidence: number;
@@ -374,4 +391,28 @@ export type ProductRoadmapMilestone = {
   summary: string;
   status: "online" | "next" | "vision";
   items: string[];
+};
+
+export type SupportedLocale = "zh-CN" | "en" | "es" | "ja" | "ar";
+
+export type TextDirection = "ltr" | "rtl";
+
+export type AuthMethod = "email" | "phone" | "google" | "facebook" | "apple" | "guest";
+
+export type UserPreferences = {
+  interfaceLanguage: SupportedLocale;
+  inputLanguage: SupportedLocale;
+  direction: TextDirection;
+  recommendedLanguage: SupportedLocale;
+  autoDetected: boolean;
+};
+
+export type AuthSession = {
+  id: string;
+  name: string;
+  contact: string;
+  method: AuthMethod;
+  preferredLanguage: SupportedLocale;
+  inputLanguage: SupportedLocale;
+  createdAt: string;
 };
