@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { DashboardCards } from "@/components/dashboard-cards";
 import { HistoryTable } from "@/components/history-table";
@@ -13,23 +13,13 @@ import { aggregateErrorHotspots } from "@/lib/typing";
 import { TrainingRecord } from "@/lib/types";
 
 export default function StatsPage() {
-  const [level, setLevel] = useState(1);
-  const [xp, setXp] = useState(0);
-  const [streak, setStreak] = useState(0);
-  const [coins, setCoins] = useState(0);
-  const [bestWpm, setBestWpm] = useState(0);
-  const [records, setRecords] = useState<TrainingRecord[]>([]);
-
-  useEffect(() => {
-    const progress = loadProgress();
-    const recordList = loadRecords();
-    setLevel(progress.level);
-    setXp(progress.xp);
-    setStreak(progress.streak);
-    setCoins(progress.coins);
-    setBestWpm(recordList.length ? Math.max(...recordList.map((r) => r.wpm)) : 0);
-    setRecords(recordList);
-  }, []);
+  const [progress] = useState(() => (typeof window === "undefined" ? null : loadProgress()));
+  const [records] = useState<TrainingRecord[]>(() => (typeof window === "undefined" ? [] : loadRecords()));
+  const level = progress?.level ?? 1;
+  const xp = progress?.xp ?? 0;
+  const streak = progress?.streak ?? 0;
+  const coins = progress?.coins ?? 0;
+  const bestWpm = records.length ? Math.max(...records.map((r) => r.wpm)) : 0;
 
   const totalSessions = records.length;
   const averageWpm = totalSessions

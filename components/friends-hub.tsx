@@ -42,24 +42,27 @@ function parseInviteUrl(url: string) {
 }
 
 export function FriendsHub({ inviteCode, inviteName }: Props) {
-  const [profile, setProfile] = useState<FriendProfile | null>(null);
-  const [friends, setFriends] = useState<FriendLink[]>([]);
+  const [profile, setProfile] = useState<FriendProfile | null>(() =>
+    typeof window === "undefined" ? null : loadFriendProfile()
+  );
+  const [friends, setFriends] = useState<FriendLink[]>(() =>
+    typeof window === "undefined" ? [] : loadFriends()
+  );
   const [manualLink, setManualLink] = useState("");
   const [hint, setHint] = useState("把链接发给朋友，对方在微信、QQ 或浏览器里点开就能直接进入网页。");
 
   useEffect(() => {
-    const localProfile = loadFriendProfile();
+    if (!profile) return;
+
     const localFriends = loadFriends();
-    setProfile(localProfile);
-    setFriends(localFriends);
-    void syncCloudProfile(localProfile, loadProgress());
-    void syncCloudFriends(localProfile.shareCode, localFriends);
-    void pullCloudFriends(localProfile.shareCode).then((items) => {
+    void syncCloudProfile(profile, loadProgress());
+    void syncCloudFriends(profile.shareCode, localFriends);
+    void pullCloudFriends(profile.shareCode).then((items) => {
       if (items.length === 0) return;
       items.forEach((item) => upsertFriend(item));
       setFriends(loadFriends());
     });
-  }, []);
+  }, [profile]);
 
   const inviteUrl = useMemo(() => {
     if (!profile || typeof window === "undefined") return "";

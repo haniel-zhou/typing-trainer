@@ -42,25 +42,34 @@ type SpeechWindow = Window & {
   webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
 };
 
+function getSpeechRecognitionConstructor() {
+  if (typeof window === "undefined") return null;
+
+  return (
+    (window as SpeechWindow).SpeechRecognition ??
+    (window as SpeechWindow).webkitSpeechRecognition ??
+    null
+  );
+}
+
 export function CustomEditor() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [items, setItems] = useState<CustomExercise[]>([]);
+  const [items, setItems] = useState<CustomExercise[]>(() =>
+    typeof window === "undefined" ? [] : loadCustomExercises()
+  );
   const [termInput, setTermInput] = useState("");
-  const [wordBanks, setWordBanks] = useState<PersonalWordBank[]>([]);
+  const [wordBanks, setWordBanks] = useState<PersonalWordBank[]>(() =>
+    typeof window === "undefined" ? [] : loadWordBanks()
+  );
   const [isListening, setIsListening] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(false);
+  const [speechSupported] = useState(() => Boolean(getSpeechRecognitionConstructor()));
   const [cloudHint, setCloudHint] = useState("词库会优先保存在当前浏览器，也会尝试同步到云端。");
   const contentLength = content.trim().length;
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   useEffect(() => {
-    setItems(loadCustomExercises());
-    const localBanks = loadWordBanks();
-    setWordBanks(localBanks);
-    const SpeechRecognition =
-      (window as SpeechWindow).SpeechRecognition ??
-      (window as SpeechWindow).webkitSpeechRecognition;
+    const SpeechRecognition = getSpeechRecognitionConstructor();
 
     if (!SpeechRecognition) return;
 
@@ -78,7 +87,6 @@ export function CustomEditor() {
     };
     recognition.onend = () => setIsListening(false);
     recognitionRef.current = recognition;
-    setSpeechSupported(true);
 
     return () => recognition.stop();
   }, []);
@@ -173,7 +181,7 @@ export function CustomEditor() {
     saveCustomExercises(updated);
   }
 
-  function useWordBank(bank: PersonalWordBank) {
+  function applyWordBank(bank: PersonalWordBank) {
     setTitle(bank.title);
     setTermInput(bank.terms.join("\n"));
     setContent(buildPracticeTextFromTerms(bank.terms));
@@ -317,7 +325,7 @@ export function CustomEditor() {
                       {bank.terms.join(" · ")}
                     </div>
                     <div className="mt-4 flex gap-2">
-                      <Button type="button" onClick={() => useWordBank(bank)}>
+                      <Button type="button" onClick={() => applyWordBank(bank)}>
                         填入编辑器
                       </Button>
                       <Button variant="outline" type="button" onClick={() => removeWordBank(bank.id)}>

@@ -1,17 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { LessonCard } from "@/components/lesson-card";
 import { LessonRoadmap } from "@/components/lesson-roadmap";
 import { loadRecords } from "@/lib/storage";
 import { Lesson, TrainingRecord } from "@/lib/types";
 
 export function LessonsClientView({ lessons }: { lessons: Lesson[] }) {
-  const [records, setRecords] = useState<TrainingRecord[]>([]);
-
-  useEffect(() => {
-    setRecords(loadRecords());
-  }, []);
+  const [records] = useState<TrainingRecord[]>(() => (typeof window === "undefined" ? [] : loadRecords()));
 
   return (
     <div className="space-y-6">

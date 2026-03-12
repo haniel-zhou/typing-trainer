@@ -14,30 +14,43 @@ import { buildAchievementBadges, mergeAchievementBadges } from "@/lib/typing";
 import { AchievementBadge, AppProgress, TrainingRecord } from "@/lib/types";
 
 export default function SeasonPage() {
-  const [progress, setProgress] = useState<AppProgress>({
-    level: 1,
-    xp: 0,
-    streak: 0,
-    lastPracticeDate: null,
-    totalCheckIns: 0,
-    coins: 0,
-    lastCheckInDate: null,
-    seasonPoints: 0
-  });
-  const [records, setRecords] = useState<TrainingRecord[]>([]);
-  const [badges, setBadges] = useState<AchievementBadge[]>([]);
+  const [progress] = useState<AppProgress>(() =>
+    typeof window === "undefined"
+      ? {
+          level: 1,
+          xp: 0,
+          streak: 0,
+          lastPracticeDate: null,
+          totalCheckIns: 0,
+          coins: 0,
+          lastCheckInDate: null,
+          seasonPoints: 0
+        }
+      : loadProgress()
+  );
+  const [records] = useState<TrainingRecord[]>(() => (typeof window === "undefined" ? [] : loadRecords()));
+  const [badges, setBadges] = useState<AchievementBadge[]>(() =>
+    buildAchievementBadges(
+      typeof window === "undefined" ? [] : loadRecords(),
+      typeof window === "undefined"
+        ? {
+            level: 1,
+            xp: 0,
+            streak: 0,
+            lastPracticeDate: null,
+            totalCheckIns: 0,
+            coins: 0,
+            lastCheckInDate: null,
+            seasonPoints: 0
+          }
+        : loadProgress()
+    )
+  );
 
   useEffect(() => {
-    const nextProgress = loadProgress();
-    const nextRecords = loadRecords();
-    const localBadges = buildAchievementBadges(nextRecords, nextProgress);
-    setProgress(nextProgress);
-    setRecords(nextRecords);
-    setBadges(localBadges);
-
     void pullCloudAchievements(loadFriendProfile().shareCode).then((items) => {
       if (items.length === 0) return;
-      setBadges(mergeAchievementBadges(localBadges, items));
+      setBadges((current) => mergeAchievementBadges(current, items));
     });
   }, []);
 

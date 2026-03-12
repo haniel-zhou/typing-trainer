@@ -31,42 +31,38 @@ import { buildAchievementBadges, mergeAchievementBadges } from "@/lib/typing";
 import { loadFriendProfile, loadProgress, loadRecords } from "@/lib/storage";
 import { AchievementBadge, AppProgress, TrainingRecord } from "@/lib/types";
 
+const DEFAULT_PROGRESS: AppProgress = {
+  level: 1,
+  xp: 0,
+  streak: 0,
+  lastPracticeDate: null,
+  totalCheckIns: 0,
+  coins: 0,
+  lastCheckInDate: null,
+  seasonPoints: 0
+};
+
 export default function HomePage() {
-  const [progress, setProgress] = useState<AppProgress>({
-    level: 1,
-    xp: 0,
-    streak: 0,
-    lastPracticeDate: null,
-    totalCheckIns: 0,
-    coins: 0,
-    lastCheckInDate: null,
-    seasonPoints: 0
-  });
-  const [level, setLevel] = useState(1);
-  const [xp, setXp] = useState(0);
-  const [streak, setStreak] = useState(0);
-  const [bestWpm, setBestWpm] = useState(0);
-  const [records, setRecords] = useState<TrainingRecord[]>([]);
-  const [badges, setBadges] = useState<AchievementBadge[]>([]);
-  const [myShareCode, setMyShareCode] = useState("");
+  const [progress, setProgress] = useState<AppProgress>(() =>
+    typeof window === "undefined" ? DEFAULT_PROGRESS : loadProgress()
+  );
+  const [records] = useState<TrainingRecord[]>(() => (typeof window === "undefined" ? [] : loadRecords()));
+  const [badges, setBadges] = useState<AchievementBadge[]>(() =>
+    buildAchievementBadges(typeof window === "undefined" ? [] : loadRecords(), typeof window === "undefined" ? DEFAULT_PROGRESS : loadProgress())
+  );
+  const [myShareCode] = useState(() =>
+    typeof window === "undefined" ? "" : loadFriendProfile().shareCode
+  );
+  const level = progress.level;
+  const xp = progress.xp;
+  const streak = progress.streak;
+  const bestWpm = records.length ? Math.max(...records.map((r) => r.wpm)) : 0;
 
   useEffect(() => {
-    const progress = loadProgress();
-    const records = loadRecords();
     const profile = loadFriendProfile();
-    const localBadges = buildAchievementBadges(records, progress);
-    setProgress(progress);
-    setLevel(progress.level);
-    setXp(progress.xp);
-    setStreak(progress.streak);
-    setBestWpm(records.length ? Math.max(...records.map((r) => r.wpm)) : 0);
-    setRecords(records);
-    setBadges(localBadges);
-    setMyShareCode(profile.shareCode);
-
     void pullCloudAchievements(profile.shareCode).then((items) => {
       if (items.length === 0) return;
-      setBadges(mergeAchievementBadges(localBadges, items));
+      setBadges((current) => mergeAchievementBadges(current, items));
     });
   }, []);
 
@@ -226,12 +222,7 @@ export default function HomePage() {
       <div className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
         <DailyCheckInCard
           progress={progress}
-          onProgressChange={(next) => {
-            setProgress(next);
-            setLevel(next.level);
-            setXp(next.xp);
-            setStreak(next.streak);
-          }}
+          onProgressChange={setProgress}
         />
         <AchievementWall badges={badges} />
       </div>
@@ -239,12 +230,7 @@ export default function HomePage() {
       <DailyMissionBoard
         records={records}
         progress={progress}
-        onProgressChange={(next) => {
-          setProgress(next);
-          setLevel(next.level);
-          setXp(next.xp);
-          setStreak(next.streak);
-        }}
+        onProgressChange={setProgress}
       />
 
       <ShareHistoryPanel />

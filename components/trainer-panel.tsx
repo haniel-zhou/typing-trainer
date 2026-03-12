@@ -81,22 +81,64 @@ type SessionConfig = {
 };
 
 const COMBO_MILESTONE = 12;
+const DEFAULT_PROGRESS = {
+  level: 1,
+  xp: 0,
+  streak: 0,
+  lastPracticeDate: null,
+  totalCheckIns: 0,
+  coins: 0,
+  lastCheckInDate: null,
+  seasonPoints: 0
+};
 
-export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props) {
-  const router = useRouter();
-  const [sessionConfig, setSessionConfig] = useState<SessionConfig>({
-    title: duel?.title ?? boss?.title ?? challenge?.title ?? lesson?.title ?? "自由训练",
+function getNowTimestamp() {
+  return Date.now();
+}
+
+function getInitialTrainerViewSettings() {
+  return typeof window === "undefined"
+    ? { theme: "default" as const, smartAssistEnabled: true }
+    : loadTrainerViewSettings();
+}
+
+function buildSessionConfig({
+  lesson,
+  customId,
+  challenge,
+  boss,
+  duel
+}: Props): SessionConfig {
+  const customItem =
+    customId && typeof window !== "undefined"
+      ? loadCustomExercises().find((item) => item.id === customId)
+      : null;
+
+  return {
+    title: duel?.title ?? boss?.title ?? challenge?.title ?? customItem?.title ?? lesson?.title ?? "自由训练",
     description:
-      duel?.description ?? boss?.description ?? challenge?.description ?? lesson?.description ?? "使用自定义文本进行训练。",
-    target: duel?.content ?? boss?.content ?? challenge?.content ?? lesson?.content ?? "asdf jkl",
+      duel?.description ??
+      (boss ? `${boss.description} · Boss：${boss.bossName}` : undefined) ??
+      challenge?.description ??
+      lesson?.description ??
+      "使用自定义文本进行训练。",
+    target: duel?.content ?? boss?.content ?? challenge?.content ?? customItem?.content ?? lesson?.content ?? "asdf jkl",
     goalAccuracy: duel?.goalAccuracy ?? boss?.goalAccuracy ?? challenge?.goalAccuracy ?? lesson?.goalAccuracy ?? 95,
     goalWpm: duel?.goalWpm ?? boss?.goalWpm ?? challenge?.goalWpm ?? lesson?.goalWpm ?? 15,
-    mode: duel ? "duel" : boss ? "boss" : challenge ? "challenge" : lesson ? "lesson" : "custom",
+    mode: duel ? "duel" : boss ? "boss" : challenge ? "challenge" : customId ? "custom" : lesson ? "lesson" : "custom",
     challengeId: boss?.id ?? challenge?.id,
     duelId: duel?.id,
     timeLimitSeconds: duel?.timeLimitSeconds ?? boss?.timeLimitSeconds ?? challenge?.timeLimitSeconds,
     reward: boss?.reward ?? challenge?.reward
-  });
+  };
+}
+
+export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props) {
+  const router = useRouter();
+  const sessionConfig = useMemo(
+    () => buildSessionConfig({ lesson, customId, challenge, boss, duel }),
+    [boss, challenge, customId, duel, lesson]
+  );
 
   const [input, setInput] = useState("");
   const [startedAt, setStartedAt] = useState<number | null>(null);
@@ -107,127 +149,49 @@ export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props)
   const [xpGained, setXpGained] = useState(0);
   const [coinsGained, setCoinsGained] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [isReady, setIsReady] = useState(!customId);
   const [lastTypedIndex, setLastTypedIndex] = useState<number | null>(null);
   const [lastTypedState, setLastTypedState] = useState<"correct" | "wrong" | null>(null);
   const [burstToken, setBurstToken] = useState(0);
-  const [bestLessonWpm, setBestLessonWpm] = useState(0);
-  const [bestLessonAccuracy, setBestLessonAccuracy] = useState(0);
-  const [level, setLevel] = useState(1);
-  const [streak, setStreak] = useState(0);
+  const [progressState, setProgressState] = useState(() =>
+    typeof window === "undefined" ? DEFAULT_PROGRESS : loadProgress()
+  );
+  const [recordHistory, setRecordHistory] = useState<TrainingRecord[]>(() =>
+    typeof window === "undefined" ? [] : loadRecords()
+  );
   const [beatPulseToken, setBeatPulseToken] = useState(0);
-  const [viewTheme, setViewTheme] = useState<"default" | "eye-care" | "night">("default");
-  const [smartAssistEnabled, setSmartAssistEnabled] = useState(true);
+  const [viewTheme, setViewTheme] = useState<"default" | "eye-care" | "night">(
+    () => getInitialTrainerViewSettings().theme
+  );
+  const [smartAssistEnabled, setSmartAssistEnabled] = useState(
+    () => getInitialTrainerViewSettings().smartAssistEnabled
+  );
   const [savedKeystrokes, setSavedKeystrokes] = useState(0);
   const [musicPanelOpen, setMusicPanelOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   const { title, description, target, goalAccuracy, goalWpm, mode, challengeId, duelId, timeLimitSeconds, reward } = sessionConfig;
   const allowSmartAssist = mode === "custom";
+  const isReady = !customId || typeof window !== "undefined";
+  const level = progressState.level;
+  const streak = progressState.streak;
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
   useEffect(() => {
-    const settings = loadTrainerViewSettings();
-    setViewTheme(settings.theme);
-    setSmartAssistEnabled(settings.smartAssistEnabled);
-  }, []);
-
-  useEffect(() => {
     saveTrainerViewSettings({ theme: viewTheme, smartAssistEnabled });
   }, [smartAssistEnabled, viewTheme]);
-
-  useEffect(() => {
-    if (duel) {
-      setSessionConfig({
-        title: duel.title,
-        description: duel.description,
-        target: duel.content,
-        goalAccuracy: duel.goalAccuracy,
-        goalWpm: duel.goalWpm,
-        mode: "duel",
-        duelId: duel.id,
-        timeLimitSeconds: duel.timeLimitSeconds
-      });
-      setIsReady(true);
-      return;
-    }
-
-    if (boss) {
-      setSessionConfig({
-        title: boss.title,
-        description: `${boss.description} · Boss：${boss.bossName}`,
-        target: boss.content,
-        goalAccuracy: boss.goalAccuracy,
-        goalWpm: boss.goalWpm,
-        mode: "boss",
-        challengeId: boss.id,
-        timeLimitSeconds: boss.timeLimitSeconds,
-        reward: boss.reward
-      });
-      setIsReady(true);
-      return;
-    }
-
-    if (challenge) {
-      setSessionConfig({
-        title: challenge.title,
-        description: challenge.description,
-        target: challenge.content,
-        goalAccuracy: challenge.goalAccuracy,
-        goalWpm: challenge.goalWpm,
-        mode: "challenge",
-        challengeId: challenge.id,
-        timeLimitSeconds: challenge.timeLimitSeconds,
-        reward: challenge.reward
-      });
-      setIsReady(true);
-      return;
-    }
-
-    if (!customId) {
-      setSessionConfig({
-        title: lesson?.title ?? "自由训练",
-        description: lesson?.description ?? "使用自定义文本进行训练。",
-        target: lesson?.content ?? "asdf jkl",
-        goalAccuracy: lesson?.goalAccuracy ?? 95,
-        goalWpm: lesson?.goalWpm ?? 15,
-        mode: lesson ? "lesson" : "custom"
-      });
-      setIsReady(true);
-      return;
-    }
-
-    const customItem = loadCustomExercises().find((item) => item.id === customId);
-
-    setSessionConfig({
-      title: customItem?.title ?? "自由训练",
-      description: lesson?.description ?? "使用自定义文本进行训练。",
-      target: customItem?.content ?? lesson?.content ?? "asdf jkl",
-      goalAccuracy: lesson?.goalAccuracy ?? 95,
-      goalWpm: lesson?.goalWpm ?? 15,
-      mode: "custom"
-    });
-    setIsReady(true);
-  }, [boss, challenge, customId, duel, lesson]);
-
-  useEffect(() => {
-    const progress = loadProgress();
-    const records = loadRecords();
+  const lessonRecords = useMemo(() => {
     const currentLessonId = lesson?.id;
-    const lessonRecords = currentLessonId
-      ? records.filter((item) => item.lessonId === currentLessonId)
-      : records.filter((item) => item.title === title);
-
-    setLevel(progress.level);
-    setStreak(progress.streak);
-    setBestLessonWpm(lessonRecords.length ? Math.max(...lessonRecords.map((item) => item.wpm)) : 0);
-    setBestLessonAccuracy(
-      lessonRecords.length ? Math.max(...lessonRecords.map((item) => item.accuracy)) : 0
-    );
-  }, [lesson?.id, title]);
+    return currentLessonId
+      ? recordHistory.filter((item) => item.lessonId === currentLessonId)
+      : recordHistory.filter((item) => item.title === title);
+  }, [lesson?.id, recordHistory, title]);
+  const bestLessonWpm = lessonRecords.length ? Math.max(...lessonRecords.map((item) => item.wpm)) : 0;
+  const bestLessonAccuracy = lessonRecords.length
+    ? Math.max(...lessonRecords.map((item) => item.accuracy))
+    : 0;
 
   useEffect(() => {
     if (!startedAt || finished || paused) return;
@@ -249,13 +213,6 @@ export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props)
 
     return () => window.clearTimeout(timer);
   }, [lastTypedIndex, lastTypedState]);
-
-  useEffect(() => {
-    if (!startedAt || finished || !timeLimitSeconds) return;
-    if (elapsedSeconds >= timeLimitSeconds) {
-      finish(input, combo);
-    }
-  }, [combo, elapsedSeconds, finished, input, startedAt, timeLimitSeconds]);
 
   const seconds = startedAt ? Math.max(1, elapsedSeconds) : 1;
   const timerDisplay = timeLimitSeconds
@@ -322,7 +279,7 @@ export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props)
     if (!suggestion || finished || paused) return;
 
     if (!startedAt) {
-      const now = Date.now();
+      const now = getNowTimestamp();
       setStartedAt(now);
       setElapsedSeconds(1);
     }
@@ -346,7 +303,7 @@ export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props)
     if (finished || paused) return;
 
     if (!startedAt) {
-      const now = Date.now();
+      const now = getNowTimestamp();
       setStartedAt(now);
       setElapsedSeconds(1);
     }
@@ -414,10 +371,7 @@ export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props)
     };
 
     saveProgress(nextProgress);
-    setLevel(nextLevel);
-    setStreak(nextStreak);
-    setBestLessonWpm((prev) => Math.max(prev, finalWpm));
-    setBestLessonAccuracy((prev) => Math.max(prev, finalAccuracy));
+    setProgressState(nextProgress);
 
     const prevRecords = loadRecords();
     const record: TrainingRecord = {
@@ -440,6 +394,7 @@ export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props)
 
     saveRecords([record, ...prevRecords].slice(0, 50));
     const nextRecords = [record, ...prevRecords].slice(0, 50);
+    setRecordHistory(nextRecords);
     const profile = loadFriendProfile();
     const nextBadges = buildAchievementBadges(nextRecords, nextProgress);
     void syncCloudRecords(profile.shareCode, profile.name, nextRecords, nextProgress);
@@ -459,6 +414,13 @@ export function TrainerPanel({ lesson, customId, challenge, boss, duel }: Props)
       });
     }
   }
+
+  useEffect(() => {
+    if (!startedAt || finished || !timeLimitSeconds) return;
+    if (elapsedSeconds >= timeLimitSeconds) {
+      finish(input, combo);
+    }
+  }, [combo, elapsedSeconds, finish, finished, input, startedAt, timeLimitSeconds]);
 
   function reset() {
     setInput("");

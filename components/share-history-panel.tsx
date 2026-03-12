@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Copy, Download, History, Share2, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadShareHistory } from "@/lib/storage";
@@ -31,11 +31,7 @@ function formatTime(iso: string) {
 }
 
 export function ShareHistoryPanel() {
-  const [items, setItems] = useState<ShareRecord[]>([]);
-
-  useEffect(() => {
-    setItems(loadShareHistory());
-  }, []);
+  const [items] = useState<ShareRecord[]>(() => (typeof window === "undefined" ? [] : loadShareHistory()));
 
   return (
     <Card>

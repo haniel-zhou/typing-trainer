@@ -37,20 +37,18 @@ function buildPersonalEntry(records: TrainingRecord[]): LeaderboardEntry | null 
 }
 
 export default function ChallengePage() {
-  const [records, setRecords] = useState<TrainingRecord[]>([]);
-  const [seasonPoints, setSeasonPoints] = useState(0);
+  const [records] = useState<TrainingRecord[]>(() => (typeof window === "undefined" ? [] : loadRecords()));
+  const [seasonPoints] = useState(() =>
+    typeof window === "undefined" ? 0 : loadProgress().seasonPoints
+  );
   const [cloudGlobalBoard, setCloudGlobalBoard] = useState<LeaderboardEntry[]>([]);
   const [cloudFriendsBoard, setCloudFriendsBoard] = useState<LeaderboardEntry[]>([]);
   const [cloudSeasonGlobalBoard, setCloudSeasonGlobalBoard] = useState<SeasonLeaderboardEntry[]>([]);
   const [cloudSeasonFriendsBoard, setCloudSeasonFriendsBoard] = useState<SeasonLeaderboardEntry[]>([]);
 
   useEffect(() => {
-    const localRecords = loadRecords();
-    const progress = loadProgress();
     const profile = loadFriendProfile();
     const friends = loadFriends();
-    setRecords(localRecords);
-    setSeasonPoints(progress.seasonPoints);
 
     void fetchCloudLeaderboard(20).then((entries) => {
       if (entries.length > 0) {

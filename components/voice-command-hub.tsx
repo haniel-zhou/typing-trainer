@@ -28,9 +28,19 @@ type SpeechWindow = Window & {
   webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
 };
 
+function getSpeechRecognitionConstructor() {
+  if (typeof window === "undefined") return null;
+
+  return (
+    (window as SpeechWindow).SpeechRecognition ??
+    (window as SpeechWindow).webkitSpeechRecognition ??
+    null
+  );
+}
+
 export function VoiceCommandHub({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
-  const [supported, setSupported] = useState(false);
+  const [supported] = useState(() => Boolean(getSpeechRecognitionConstructor()));
   const [listening, setListening] = useState(false);
   const [hint, setHint] = useState("直接说自然话就行，例如：帮我打开成长统计、我想练第二关、先暂停一下。");
   const [lastIntent, setLastIntent] = useState<VoiceIntent | null>(null);
@@ -41,10 +51,31 @@ export function VoiceCommandHub({ compact = false }: { compact?: boolean }) {
     []
   );
 
+  const emitTrainerCommand = (action: VoiceCommandAction) => {
+    window.dispatchEvent(new CustomEvent("trainer-command", { detail: { action } }));
+  };
+
+  const handleTranscript = (rawText: string) => {
+    const intent = parseVoiceIntent(rawText);
+    setLastIntent(intent);
+
+    if (intent.kind === "route") {
+      router.push(intent.route);
+      setHint(`已识别“${rawText}” -> ${intent.label}`);
+      return;
+    }
+
+    if (intent.kind === "trainer") {
+      emitTrainerCommand(intent.action);
+      setHint(`已识别“${rawText}” -> ${intent.label}`);
+      return;
+    }
+
+    setHint(`没听懂“${rawText}”。可以试试：${commandHelp.join("、")}。`);
+  };
+
   useEffect(() => {
-    const SpeechRecognition =
-      (window as SpeechWindow).SpeechRecognition ??
-      (window as SpeechWindow).webkitSpeechRecognition;
+    const SpeechRecognition = getSpeechRecognitionConstructor();
 
     if (!SpeechRecognition) return;
 
@@ -63,34 +94,9 @@ export function VoiceCommandHub({ compact = false }: { compact?: boolean }) {
     recognition.onend = () => setListening(false);
 
     recognitionRef.current = recognition;
-    setSupported(true);
 
     return () => recognition.stop();
   }, []);
-
-  function emitTrainerCommand(action: VoiceCommandAction) {
-    window.dispatchEvent(new CustomEvent("trainer-command", { detail: { action } }));
-  }
-
-  function handleTranscript(rawText: string) {
-    const intent = parseVoiceIntent(rawText);
-    setLastIntent(intent);
-
-    if (intent.kind === "route") {
-      router.push(intent.route);
-      setHint(`已识别“${rawText}” -> ${intent.label}`);
-      return;
-    }
-
-    if (intent.kind === "trainer") {
-      emitTrainerCommand(intent.action);
-      setHint(`已识别“${rawText}” -> ${intent.label}`);
-      return;
-    }
-
-    setHint(`没听懂“${rawText}”。可以试试：${commandHelp.join("、")}。`);
-  }
-
   function toggleListening() {
     if (!recognitionRef.current) return;
     if (listening) {
