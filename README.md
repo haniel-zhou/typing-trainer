@@ -55,7 +55,7 @@ SUPABASE_SERVICE_ROLE_KEY=你的 Supabase Service Role Key
 
 ### 2. 初始化数据库
 
-把 [supabase/schema.sql](/Users/haniel/code/matt/supabase/schema.sql) 里的 SQL 粘到 Supabase SQL Editor 执行。
+把 `supabase/schema.sql` 里的 SQL 粘到 Supabase SQL Editor 执行。
 
 ### 3. 行为说明
 
@@ -63,6 +63,21 @@ SUPABASE_SERVICE_ROLE_KEY=你的 Supabase Service Role Key
 - 配好后，好友页会同步邀请关系
 - 训练完成后会自动把记录推到云端
 - 挑战页会优先读取云端排行榜
+
+## 部署设置
+
+部署到 Vercel 时，至少要确认以下环境变量：
+
+```bash
+NEXT_PUBLIC_APP_URL=https://你的线上域名
+SUPABASE_URL=你的 Supabase Project URL
+SUPABASE_SERVICE_ROLE_KEY=你的 Supabase Service Role Key
+```
+
+说明：
+
+- `NEXT_PUBLIC_APP_URL` 必须指向真实线上地址，否则分享页和站点元数据可能回退到 `http://localhost:3000`
+- 如果暂时不用云端同步，可以先只配置 `NEXT_PUBLIC_APP_URL`
 
 ## 技术栈
 
